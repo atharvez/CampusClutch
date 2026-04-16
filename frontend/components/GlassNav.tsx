@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
+import { NotificationBell } from './NotificationBell';
 
 export default function GlassNav() {
   const { user, logout } = useAuth();
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl shadow-sm border-b border-white/20 font-manrope">
+    <nav className="fixed top-0 w-full z-50 glass-nav font-manrope">
       <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-10">
           <motion.div
@@ -21,6 +22,7 @@ export default function GlassNav() {
           <div className="hidden md:flex items-center gap-8">
             {[
               { name: 'Explore', href: '/explore' },
+              { name: 'Community', href: '/community' },
               { name: 'Requests', href: '/dashboard' },
               { name: 'Profile', href: '/profile' }
             ].map((item, i) => (
@@ -41,14 +43,14 @@ export default function GlassNav() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <button className="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all active:scale-95">
-            <span className="material-symbols-outlined text-lg">notifications</span>
-          </button>
+        <div className="flex items-center gap-2 md:gap-4">
+          <NotificationBell />
           
+          <div className="h-6 w-px bg-on-surface-variant/10 mx-1 hidden sm:block"></div>
+
           {user ? (
-            <div className="flex items-center gap-3">
-              <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-primary-fixed/20 transition-all hover:ring-primary/40">
+            <div className="flex items-center gap-2 md:gap-3">
+              <Link href="/profile" className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-primary/10 transition-all hover:ring-primary/40 shadow-sm">
                 <img 
                   alt={user.name} 
                   className="w-full h-full object-cover" 
@@ -57,7 +59,7 @@ export default function GlassNav() {
               </Link>
               <button 
                 onClick={logout}
-                className="text-xs font-bold text-on-surface-variant hover:text-primary transition-colors"
+                className="hidden sm:block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors"
               >
                 Logout
               </button>
@@ -65,7 +67,7 @@ export default function GlassNav() {
           ) : (
             <Link 
               href="/login"
-              className="px-6 py-2 bg-primary text-white text-sm font-bold rounded-full shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all"
+              className="px-5 py-2 bg-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all"
             >
               Sign In
             </Link>

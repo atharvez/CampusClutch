@@ -60,9 +60,20 @@ exports.updateUserProfile = async (req, res) => {
 // @access  Public
 exports.getUsers = async (req, res) => {
     try {
-        const { skill, year } = req.query;
+        const { skill, query: searchText, year } = req.query;
         let query = {};
-        if (skill) query.skills = { $in: [skill] };
+        
+        if (skill) {
+          query.skills = { $elemMatch: { $regex: skill, $options: 'i' } };
+        }
+        
+        if (searchText) {
+          query.$or = [
+            { name: { $regex: searchText, $options: 'i' } },
+            { skills: { $elemMatch: { $regex: searchText, $options: 'i' } } }
+          ];
+        }
+
         if (year) query.year = year;
 
         const users = await User.find(query).select('-password');

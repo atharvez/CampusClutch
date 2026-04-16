@@ -39,7 +39,7 @@ export default function Home() {
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-6">
             <a 
-              href="/signup" 
+              href="/projects/create" 
               className="w-full md:w-auto px-12 py-5 bg-primary text-white font-extrabold rounded-2xl shadow-[0_20px_40px_-10px_rgba(53,37,205,0.3)] hover:brightness-110 active:scale-95 transition-all text-sm tracking-widest uppercase"
             >
               Start Building

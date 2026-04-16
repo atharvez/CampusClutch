@@ -1,153 +1,155 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import GlassNav from '@/components/GlassNav';
 import { fetcher } from '@/utils/api';
 import { Competition } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { motion } from 'framer-motion';
 
-export default function CreateTeamPage() {
+function CreateTeamForm() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const compId = searchParams.get('compId');
+  
   const [competitions, setCompetitions] = useState<Competition[]>([]);
-  const [selectedComp, setSelectedComp] = useState('');
+  const [selectedComp, setSelectedComp] = useState<Competition | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [teamSize, setTeamSize] = useState(4);
-  const [skills, setSkills] = useState<string[]>(['React', 'Tailwind CSS', 'Figma']);
-  const [newSkill, setNewSkill] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const router = useRouter();
-
-  const isHost = user?.role === 'host' || user?.role === 'admin';
 
   useEffect(() => {
     const getComps = async () => {
       try {
         const data = await fetcher<Competition[]>('/competitions');
-        setCompetitions(data.filter(c => c.isOfficial));
-        if (data.length > 0) setSelectedComp(data[0]._id);
-      } catch (error) {
-        console.error('Error fetching comps:', error);
+        const officialOnes = data.filter(c => c.isOfficial);
+        setCompetitions(officialOnes);
+        
+        if (compId) {
+          const found = officialOnes.find(c => c._id === compId);
+          if (found) {
+            setSelectedComp(found);
+            setTeamSize(found.teamSize);
+          }
+        } else if (officialOnes.length > 0) {
+          setSelectedComp(officialOnes[0]);
+          setTeamSize(officialOnes[0].teamSize);
+        }
+      } catch (err) {
+        console.error('Error fetching comps:', err);
       }
     };
     getComps();
-  }, []);
-
-  const handleAddSkill = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && newSkill.trim()) {
-      e.preventDefault();
-      if (!skills.includes(newSkill.trim())) {
-        setSkills([...skills, newSkill.trim()]);
-      }
-      setNewSkill('');
-    }
-  };
-
-  const removeSkill = (skill: string) => {
-    setSkills(skills.filter(s => s !== skill));
-  };
+  }, [compId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedComp) return setError('Please select a contest');
+    
     setLoading(true);
+    setError('');
+    
     try {
-      // If Host, they create a competition directly
-      // If Student, they create a 'community project' (which is technically a competition in our model)
-      const endpoint = isHost ? '/competitions' : '/competitions'; // Both go to competitions, backend handles isOfficial
-      
-      await fetcher(endpoint, {
+      const team = await fetcher<any>('/teams', {
         method: 'POST',
         body: JSON.stringify({
-          title: name, // Using 'name' but backend expects 'title'
+          name,
           description,
-          category: isHost ? 'Competition' : 'Project',
-          teamSize,
-          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days default
-          requiredSkills: skills,
+          competitionId: selectedComp._id,
+          maxMembers: teamSize,
         }),
       });
-      router.push('/explore');
-    } catch (error) {
-      alert('Operation failed: ' + (error as Error).message);
+      router.push(`/teams/${team._id}`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create team');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-surface text-on-surface antialiased min-h-screen flex flex-col font-body">
-      <GlassNav />
-      
-      <main className="flex-grow pt-32 pb-12 px-6 flex justify-center items-start">
-        <div className="w-full max-w-2xl">
-          {/* Header Section */}
-          <div className="mb-10 text-center md:text-left">
-            <h1 className="text-4xl font-extrabold tracking-tight text-on-surface mb-3">
-              {isHost ? 'Launch Official Competition' : 'Spark a Community Project'}
-            </h1>
-            <p className="text-on-surface-variant text-lg opacity-80 leading-relaxed">
-              {isHost 
-                ? 'Institutional grade event management for your college ecosystem.' 
-                : 'reddit-style open posting. Share your idea and find your squad.'}
-            </p>
-          </div>
+    <div className="w-full max-w-3xl px-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-[2.5rem] p-8 md:p-14 shadow-2xl shadow-primary/5 border border-outline-variant/10"
+      >
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-black text-on-surface tracking-tight mb-4">Build Your Squad</h1>
+          <p className="text-on-surface-variant max-w-md mx-auto">Launch a team for an official contest and start recruiting the best talent across campus.</p>
+        </div>
 
-          {/* Form Card */}
-          <div className="bg-white rounded-3xl shadow-2xl shadow-primary/5 p-8 md:p-12 border border-outline-variant/10">
-            <form onSubmit={handleSubmit} className="space-y-10">
-              
-              {/* Competition/Post Title */}
-              <div className="space-y-3">
-                <label className="block text-lg font-bold text-on-surface tracking-tight" htmlFor="team-name">
-                  {isHost ? 'Competition Title' : 'Project Subject'}
-                </label>
-                <input 
-                  id="team-name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={isHost ? "e.g. AWS GameDay 2024" : "e.g. Building a Decentralized Marketplace"}
-                  className="w-full px-5 py-4 bg-surface-container-low border-none rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all text-sm font-semibold text-on-surface outline-none"
-                />
+        <form onSubmit={handleSubmit} className="space-y-10">
+          {error && (
+            <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold flex items-center gap-3">
+              <span className="material-symbols-outlined">error</span> {error}
+            </div>
+          )}
+
+          <div className="space-y-8">
+            {/* Contest Selection */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Target Contest</label>
+              <div className="relative group">
+                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary z-10">verified</span>
+                <select 
+                  value={selectedComp?._id || ''}
+                  onChange={(e) => {
+                    const found = competitions.find(c => c._id === e.target.value);
+                    if (found) {
+                        setSelectedComp(found);
+                        setTeamSize(found.teamSize);
+                    }
+                  }}
+                  className="w-full bg-surface-container-low border-none rounded-2xl pl-14 pr-6 py-5 text-on-surface font-bold focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none"
+                  disabled={!!compId}
+                >
+                  {competitions.map((c) => (
+                    <option key={c._id} value={c._id}>{c.title}</option>
+                  ))}
+                </select>
+                {!compId && (
+                  <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+                )}
               </div>
+            </div>
 
-              {/* Required Skills Section */}
-              <div className="space-y-4">
-                <label className="block text-lg font-bold text-on-surface tracking-tight">Required Expertise</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={newSkill}
-                    onChange={(e) => setNewSkill(e.target.value)}
-                    onKeyDown={handleAddSkill}
-                    placeholder="Enter skill and press enter..."
-                    className="w-full px-5 py-4 bg-surface-container-low border-none rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all text-sm font-semibold text-on-surface outline-none mb-4"
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    {skills.map((skill, idx) => (
-                      <span key={idx} className="px-5 py-2 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center gap-2 shadow-sm">
-                        {skill} 
-                        <span 
-                          onClick={() => removeSkill(skill)}
-                          className="material-symbols-outlined text-[16px] cursor-pointer opacity-60 hover:opacity-100"
-                        >
-                          close
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            {/* Team Name */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Team Name</label>
+              <input 
+                type="text" 
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Dream Team Alpha"
+                className="w-full bg-surface-container-low border-none rounded-2xl px-8 py-5 text-on-surface font-bold focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+                required
+              />
+            </div>
 
-              {/* Team Size */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="block text-lg font-bold text-on-surface tracking-tight" htmlFor="team-size">Target team size</label>
-                  <span className="text-primary font-extrabold text-xl">{teamSize} Members</span>
+            {/* Team Mission */}
+            <div className="space-y-3">
+               <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Team Mission</label>
+               <textarea 
+                 value={description}
+                 onChange={(e) => setDescription(e.target.value)}
+                 placeholder="What is your goal for this contest? What kind of vibe are you looking for?"
+                 className="w-full bg-surface-container-low border-none rounded-2xl px-8 py-5 text-on-surface font-medium focus:ring-4 focus:ring-primary/10 transition-all outline-none min-h-[140px] resize-none"
+                 required
+               />
+            </div>
+
+            {/* Team Size - Adjustable as requested */}
+            <div className="space-y-4">
+                <div className="flex justify-between items-center px-1">
+                   <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Team Size Limit</label>
+                   <span className="text-primary font-black text-xl">{teamSize} Members</span>
                 </div>
                 <input 
-                  id="team-size"
                   type="range"
                   min="2"
                   max="10"
@@ -155,45 +157,30 @@ export default function CreateTeamPage() {
                   onChange={(e) => setTeamSize(parseInt(e.target.value))}
                   className="w-full h-2 bg-surface-container-low rounded-full appearance-none cursor-pointer accent-primary"
                 />
-              </div>
-
-              {/* Project Description */}
-              <div className="space-y-3">
-                <label className="block text-lg font-bold text-on-surface tracking-tight" htmlFor="description">
-                  {isHost ? 'Event Guidelines' : 'The Mission'}
-                </label>
-                <textarea 
-                  id="description"
-                  required
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder={isHost 
-                    ? "Detailed rules, timeline, and prize structure..." 
-                    : "What are you building? Why should people join? Be bold."} 
-                  className="w-full px-6 py-5 bg-surface-container-low border-none rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all text-sm font-medium text-on-surface outline-none h-40 resize-none"
-                />
-              </div>
-
-              {/* Footer Actions */}
-              <div className="flex flex-col-reverse md:flex-row items-center justify-end gap-4 pt-6">
-                <button 
-                  type="button"
-                  onClick={() => router.back()}
-                  className="w-full md:w-auto px-10 py-4 text-on-surface-variant font-bold hover:bg-surface-container-low rounded-2xl transition-all text-sm"
-                >
-                  Discard
-                </button>
-                <button 
-                  type="submit"
-                  disabled={loading}
-                  className="w-full md:w-auto px-14 py-4 bg-gradient-to-br from-primary to-primary-container text-white font-extrabold rounded-2xl shadow-2xl shadow-primary/20 hover:brightness-105 active:scale-[0.98] transition-all text-sm tracking-widest uppercase"
-                >
-                  {loading ? 'Initializing...' : (isHost ? 'Deploy Event' : 'Launch Project')}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
+
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full py-6 bg-gradient-to-r from-primary to-primary-container text-white font-black rounded-2xl shadow-2xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all text-sm tracking-widest uppercase disabled:opacity-50"
+          >
+            {loading ? 'Assembling Squad...' : 'Initialize Team'}
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+export default function CreateTeamPage() {
+  return (
+    <div className="bg-surface min-h-screen flex flex-col">
+      <GlassNav />
+      <main className="flex-grow pt-32 pb-20 flex justify-center items-center">
+        <Suspense fallback={<div className="text-on-surface-variant opacity-50 font-bold">Loading form...</div>}>
+          <CreateTeamForm />
+        </Suspense>
       </main>
     </div>
   );

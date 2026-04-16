@@ -41,12 +41,27 @@ export interface Team {
   createdBy: string | User;
 }
 
+export interface Project {
+  _id: string;
+  title: string;
+  description: string;
+  author: User;
+  members: User[];
+  requiredSkills: string[];
+  maxMembers: number;
+  category: string;
+  status: 'open' | 'completed' | 'cancelled';
+  createdAt: string;
+}
+
 export interface Request {
   _id: string;
   sender: User;
-  receiverTeam: Team;
+  receiverTeam?: Team;
+  receiverProject?: Project;
+  recipientUser?: User;
   status: 'pending' | 'accepted' | 'rejected';
-  type: 'join_request' | 'invitation';
+  type: 'join_request' | 'invite';
   message?: string;
   createdAt: string;
 }

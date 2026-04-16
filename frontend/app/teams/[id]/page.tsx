@@ -67,14 +67,101 @@ export default function TeamDetailPage() {
     setNewMessage('');
   };
 
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [invitingUserId, setInvitingUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (userSearchQuery.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      try {
+        const data = await fetcher(`/users?skill=${userSearchQuery}`); // Searching by skill or just generic list
+        setSearchResults(data.filter((u: any) => u._id !== user?._id));
+      } catch (error) {
+        console.error('Error searching users:', error);
+      }
+    };
+    const timer = setTimeout(searchUsers, 500);
+    return () => clearTimeout(timer);
+  }, [userSearchQuery, user?._id]);
+
+  const handleInvite = async (targetUserId: string) => {
+    setInvitingUserId(targetUserId);
+    try {
+      await fetcher('/requests', {
+        method: 'POST',
+        body: JSON.stringify({
+          teamId: id,
+          recipientUserId: targetUserId,
+          type: 'invite',
+          message: `Join our team ${team?.name}!`
+        })
+      });
+      alert('Invitation sent successfully!');
+    } catch (error) {
+      alert((error as Error).message);
+    } finally {
+      setInvitingUserId(null);
+    }
+  };
+
   if (loading || !team) return <div className="min-h-screen bg-surface flex items-center justify-center font-manrope">Loading team details...</div>;
 
-  const isLeader = user?._id === (typeof team.createdBy === 'string' ? team.createdBy : team.createdBy._id);
+  const isLeader = user?._id === (typeof team.createdBy === 'string' ? team.createdBy : team?.createdBy?._id);
 
   return (
     <div className="min-h-screen bg-surface font-body text-on-surface">
       <GlassNav />
       
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-surface/80 backdrop-blur-md">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl p-8 border border-outline-variant/10">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-black text-on-surface tracking-tight">Invite Teammates</h2>
+              <button onClick={() => setShowInviteModal(false)} className="w-10 h-10 rounded-full hover:bg-surface-container-low flex items-center justify-center">
+                 <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="relative mb-6">
+               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-50">search</span>
+               <input 
+                type="text" 
+                placeholder="Search by skill (e.g. React, UI Design)..."
+                value={userSearchQuery}
+                onChange={(e) => setUserSearchQuery(e.target.value)}
+                className="w-full bg-surface-container-low rounded-2xl pl-12 pr-6 py-4 text-sm focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+               />
+            </div>
+            <div className="space-y-4 max-h-[300px] overflow-y-auto px-2">
+               {searchResults.length === 0 && userSearchQuery.length >= 2 && <p className="text-center py-10 text-on-surface-variant opacity-60 text-sm">No users found with this skill.</p>}
+               {searchResults.map((u) => (
+                 <div key={u._id} className="flex items-center justify-between p-4 rounded-2xl bg-surface-container-lowest border border-outline-variant/5">
+                   <div className="flex items-center gap-3">
+                      <img src={u.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random`} className="w-10 h-10 rounded-full object-cover" />
+                      <div>
+                        <p className="text-sm font-bold text-on-surface">{u.name}</p>
+                        <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider opacity-60">{u.branch} | Year {u.year}</p>
+                      </div>
+                   </div>
+                   <button 
+                    onClick={() => handleInvite(u._id)}
+                    disabled={invitingUserId === u._id}
+                    className="px-6 py-2 bg-primary text-white text-[10px] font-bold rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                   >
+                     {invitingUserId === u._id ? '...' : 'Invite'}
+                   </button>
+                 </div>
+               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="pt-24 pb-16 px-6 lg:px-12 max-w-7xl mx-auto">
         {/* Hero Section - Design Matched */}
         <header className="bg-gradient-to-br from-primary to-primary-container rounded-[2rem] p-8 lg:p-12 mb-10 text-white flex flex-col md:flex-row justify-between items-end gap-8 overflow-hidden relative shadow-2xl shadow-primary/20">
@@ -90,8 +177,12 @@ export default function TeamDetailPage() {
           </div>
           <div className="relative z-10 flex gap-3">
              {isLeader && (
-               <button className="px-8 py-4 bg-white text-primary font-bold rounded-xl active:scale-95 transition-all shadow-xl hover:shadow-2xl">
-                 Manage Team
+               <button 
+                onClick={() => setShowInviteModal(true)}
+                className="px-8 py-4 bg-white text-primary font-bold rounded-xl active:scale-95 transition-all shadow-xl hover:shadow-2xl flex items-center gap-2"
+               >
+                 <span className="material-symbols-outlined">person_add</span>
+                 Invite Members
                </button>
              )}
              <button className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold rounded-xl active:scale-95 transition-all">

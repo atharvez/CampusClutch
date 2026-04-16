@@ -5,7 +5,7 @@ const Competition = require('../models/Competition');
 // @route   POST /api/teams
 // @access  Private
 exports.createTeam = async (req, res) => {
-  const { name, description, competitionId } = req.body;
+  const { name, description, competitionId, maxMembers } = req.body;
 
   try {
     const competition = await Competition.findById(competitionId);
@@ -15,7 +15,9 @@ exports.createTeam = async (req, res) => {
       name,
       description,
       competition: competitionId,
+      createdBy: req.user._id,
       members: [{ user: req.user._id, role: 'Leader' }],
+      maxMembers: maxMembers || competition.teamSize,
     });
 
     res.status(201).json(team);
@@ -43,6 +45,7 @@ exports.getTeamById = async (req, res) => {
   try {
     const team = await Team.findById(req.params.id)
       .populate('competition')
+      .populate('createdBy', 'name profileImage')
       .populate('members.user', 'name branch year bio skills profileImage');
     
     if (team) {

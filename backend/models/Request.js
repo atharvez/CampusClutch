@@ -9,7 +9,14 @@ const requestSchema = new mongoose.Schema({
   receiverTeam: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Team',
-    required: true,
+  },
+  receiverProject: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project',
+  },
+  recipientUser: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
   },
   type: {
     type: String,

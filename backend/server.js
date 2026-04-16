@@ -26,12 +26,20 @@ app.use(express.json());
 // Enable CORS
 app.use(cors());
 
+// Request logger
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
 // Define Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/competitions', require('./routes/competitions'));
 app.use('/api/teams', require('./routes/teams'));
 app.use('/api/requests', require('./routes/requests'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/projects', require('./routes/projects'));
 
 // Basic route
 app.get('/', (req, res) => {
@@ -56,9 +64,11 @@ io.on('connection', (socket) => {
   });
 });
 
+const PORT = process.env.PORT || 5000;
+
 if (require.main === module) {
   server.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   });
 }
 

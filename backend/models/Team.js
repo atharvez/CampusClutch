@@ -13,6 +13,11 @@ const teamSchema = new mongoose.Schema({
     ref: 'Competition',
     required: true,
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
   members: [{
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -28,6 +33,10 @@ const teamSchema = new mongoose.Schema({
     type: String,
     enum: ['Open', 'Full'],
     default: 'Open',
+  },
+  maxMembers: {
+    type: Number,
+    default: 4,
   },
 }, { timestamps: true });
 
