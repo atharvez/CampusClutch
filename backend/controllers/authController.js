@@ -8,15 +8,17 @@ exports.registerUser = async (req, res) => {
   const { name, email, password, branch, year, role } = req.body;
 
   try {
+    // Admin/Host accounts are pre-seeded — public registration is students only
+    if (role && (role === 'admin' || role === 'host')) {
+      return res.status(403).json({ message: 'Admin and host accounts cannot be created via registration.' });
+    }
+
     const userExists = await User.findOne({ email });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Basic college email validation (optional but recommended)
-    const collegeEmailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(edu|ac\.in|org|net)$/i;
-    // However, user said "open to any", so we'll just allow all but check format
     if (!email.includes('@')) {
        return res.status(400).json({ message: 'Invalid email format' });
     }
@@ -27,7 +29,7 @@ exports.registerUser = async (req, res) => {
       password,
       branch,
       year,
-      role: role || 'student',
+      role: 'student', // always student from public signup
       skills: [],
     });
 

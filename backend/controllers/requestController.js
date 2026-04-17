@@ -23,7 +23,7 @@ exports.getRequests = async (req, res) => {
     .populate('sender', 'name email branch year profileImage')
     .populate('recipientUser', 'name email branch year profileImage')
     .populate('receiverTeam', 'name competition')
-    .populate('receiverProject', 'title category');
+    .populate('receiverProject', 'title category author');
 
     res.json(requests);
   } catch (error) {

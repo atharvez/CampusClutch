@@ -5,7 +5,11 @@ const Project = require('../models/Project');
 // @access  Public
 exports.getProjects = async (req, res) => {
   try {
-    const projects = await Project.find().populate('author', 'name profileImage');
+    const { author } = req.query;
+    let query = {};
+    if (author) query.author = author;
+
+    const projects = await Project.find(query).populate('author', 'name profileImage');
     res.json(projects);
   } catch (error) {
     res.status(500).json({ message: error.message });

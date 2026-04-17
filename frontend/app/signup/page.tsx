@@ -12,7 +12,6 @@ export default function SignupPage() {
     password: '',
     branch: '',
     year: '1st Year',
-    role: 'student',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,22 +50,10 @@ export default function SignupPage() {
           </div>
 
           <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-primary/5 ring-1 ring-on-surface-variant/5">
-            {/* Account Type Toggle */}
-            <div className="mb-10 p-1.5 bg-surface-container-low rounded-2xl flex gap-1">
-              <button 
-                type="button"
-                onClick={() => setFormData({...formData, role: 'student'})}
-                className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all ${formData.role === 'student' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:bg-white/50'}`}
-              >
-                Student Entry
-              </button>
-              <button 
-                type="button"
-                onClick={() => setFormData({...formData, role: 'host'})}
-                className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all ${formData.role === 'host' ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:bg-white/50'}`}
-              >
-                Host / Admin
-              </button>
+            {/* Student-only signup — admin accounts are pre-seeded */}
+            <div className="mb-8 flex items-center gap-2 px-1">
+              <span className="material-symbols-outlined text-primary text-lg">school</span>
+              <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Student Registration</p>
             </div>
 
             {error && (

@@ -47,11 +47,18 @@ const userSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
-    next();
+// Hash password before saving & auto-assign avatar
+userSchema.pre('save', async function() {
+  // Auto-generate profile image from name if not set
+  if (!this.profileImage) {
+    const encodedName = encodeURIComponent(this.name || 'User');
+    this.profileImage = `https://ui-avatars.com/api/?name=${encodedName}&size=256&background=random&bold=true&format=png`;
   }
+
+  if (!this.isModified('password')) {
+    return;
+  }
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });

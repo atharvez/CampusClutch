@@ -29,6 +29,10 @@ export default function TeamCard({ item, type }: TeamCardProps) {
   const members = isTeam ? (item as Team).members.map(m => m.user) : (isProj ? (item as Project).members : []);
   const targetId = isTeam ? (item as Team)._id : (isProj ? (item as Project)._id : null);
 
+  // Determine if the current user owns this project (authors can't join their own project)
+  const projectAuthorId = isProj ? ((item as Project).author?._id || (item as Project).author as unknown as string) : null;
+  const isOwner = !!user && !!projectAuthorId && (user._id === projectAuthorId);
+
   const handleJoin = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!user) return alert('Please login to collaborate');
@@ -126,13 +130,19 @@ export default function TeamCard({ item, type }: TeamCardProps) {
                  >
                     Details
                  </Link>
-                 <button 
-                  onClick={handleJoin}
-                  disabled={isJoining || hasRequested}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${hasRequested ? 'bg-emerald-100 text-emerald-700' : 'bg-primary text-white shadow-lg shadow-primary/20 active:scale-95'}`}
-                 >
-                   {isJoining ? '...' : (hasRequested ? 'Sent' : 'Join')}
-                 </button>
+                 {isOwner ? (
+                   <span className="px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-surface-container-high text-on-surface-variant">
+                     Your Project
+                   </span>
+                 ) : (
+                   <button 
+                    onClick={handleJoin}
+                    disabled={isJoining || hasRequested}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${hasRequested ? 'bg-emerald-100 text-emerald-700' : 'bg-primary text-white shadow-lg shadow-primary/20 active:scale-95'}`}
+                   >
+                     {isJoining ? '...' : (hasRequested ? 'Sent' : 'Join')}
+                   </button>
+                 )}
              </div>
           ) : (
              <Link 
