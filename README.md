@@ -1,10 +1,10 @@
-﻿# CampusClutch ðŸŽ“âš¡
+# CampusClutch
 
-A premium full-stack platform for college students to find teammates, join competitions, and build collaborative teams.
+A full-stack platform for college students to find teammates, join competitions, and build collaborative teams.
 
 ## Overview
 
-Finding teammates for hackathons and projects can be tough. CampusClutch connects students by skills, interests, and goals â€” making team formation fast and effective.
+Finding teammates for hackathons and projects can be tough. CampusClutch connects students by skills, interests, and goals -- making team formation fast and effective.
 
 ## Tech Stack
 
@@ -18,11 +18,11 @@ Finding teammates for hackathons and projects can be tough. CampusClutch connect
 
 ## Features
 
-- ðŸ« **College Community** â€” Sign up with any college email
-- ðŸ” **Skill-Based Discovery** â€” Filter teams/competitions by tech tags
-- ðŸ¤ **Team Formation** â€” Create or join teams for hackathons and projects
-- ðŸ’¬ **Real-Time Chat** â€” Team messaging with Socket.io
-- ðŸŒ± **Seed Data** â€” Pre-loaded with 20 students, 6 competitions, 10 teams
+- College community -- sign up with any college email
+- Skill-based discovery -- filter teams/competitions by tech tags
+- Team formation -- create or join teams for hackathons and projects
+- Real-time chat -- team messaging with Socket.io
+- Seed data -- pre-loaded with 20 students, 6 competitions, 10 teams
 
 ## Getting Started
 
@@ -45,4 +45,4 @@ npm run dev
 
 ## License
 
-MIT Â© [Atharva Desai](https://github.com/atharvez)
+MIT (c) Atharva Desai
